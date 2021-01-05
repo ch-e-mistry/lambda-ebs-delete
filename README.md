@@ -20,7 +20,7 @@ AWS lambda code (python) to delete aged, not in use volumes (expect if it has ex
 
 ### High-level overview - Solution
 
-![picture](documentation/diagram.png)
+![picture](Documentation/diagram.png)
 
 The heart of the solution is a **python code executed by lambda** function. This code is responsible to:
 
@@ -57,24 +57,24 @@ Details about how you can implement the solution manually.
 #### Create Role and Policy (IAM)
 
 **Navigate in your AWS console to [IAM](https://console.aws.amazon.com/iam/home#/home).**
-![picture](documentation/IAM_1.png)
+![picture](Documentation/IAM_1.png)
 
 - Click to **"Roles"**.
 - Click to **"Create Role"**.
 
 **Create role like:**
-![picture](documentation/IAM_2.png)
+![picture](Documentation/IAM_2.png)
 
 - Choose **"Lambda"**.
 - Click **"Next: Permissions"**.
 
 **Create a new policy:**
-![picture](documentation/IAM_3.png)
+![picture](Documentation/IAM_3.png)
 
 - Click to **"Create policy"**.
 
 Edit the Policy's content like:
-![picture](documentation/IAM_4.png)
+![picture](Documentation/IAM_4.png)
 
 - Click to **"JSON" tab**.
 - **Paste** Policy content.
@@ -113,31 +113,31 @@ Edit the Policy's content like:
 ```
 
 **Review policy:**
-![picture](documentation/IAM_5.png)
+![picture](Documentation/IAM_5.png)
 
 - Fill up the **name** field.
 - Fill up **Description** section.
 - Click to **"Crete policy"**.
 
 **Now again, start to create new role:**
-![picture](documentation/IAM_1.png)
+![picture](Documentation/IAM_1.png)
 
 -Click to **Roles**.
 Click to **Crete role**.
 
 **Select previously created policy**:
-![picture](documentation/IAM_6.png)
+![picture](Documentation/IAM_6.png)
 
 - **Search** for **ebs** (Name of the policy).
 - **Select** it.
 
 Optionally **add any TAG**:
-![picture](documentation/IAM_7.png)
+![picture](Documentation/IAM_7.png)
 
 - It depends on you tagging logic.
 
 **Review and name your new role:**
-![picture](documentation/IAM_8.png)
+![picture](Documentation/IAM_8.png)
 
 - Add a **name** to your role.
 - Fill up **Description** section.
@@ -146,14 +146,14 @@ Optionally **add any TAG**:
 #### Create Lambda function
 
 Navigate to the **affected region**'s **Lambda** service && **Create a new function**:
-![picture](documentation/LAMBDA_1.png)
+![picture](Documentation/LAMBDA_1.png)
 
 - Choose right **region**.
 - Navigate to **Lambda**.
 - **Create function**.
 
 Provide **basic information** for lambda:
-![picture](documentation/LAMBDA_2.png)
+![picture](Documentation/LAMBDA_2.png)
 
 - Leave on "**Author from scratch**".
 - Fill up **name**.
@@ -164,28 +164,28 @@ Provide **basic information** for lambda:
 - Click to **Create function**.
 
 Copy **python code** to "Function code":
-![picture](documentation/LAMBDA_3.png)
+![picture](Documentation/LAMBDA_3.png)
 
 - In **Function code section, copy the [python-ebs-delete.py](./python-ebs-delete.py) file's content** (file is in this repository).
 - Don't left to **"Deploy"** the code. Click on it.
 
 Add required **environment variable**:
-![picture](documentation/LAMBDA_4.png)
+![picture](Documentation/LAMBDA_4.png)
 
 - Edit **Environment variables** section.
 - Add `IGNORE_WINDOW`: Exclude not in use volumes which are older than (int) days.
 
 Adjust **basic settings**:
-![picture](documentation/LAMBDA_5.png)
+![picture](Documentation/LAMBDA_5.png)
 
 - Be sure, **Timeout** was set to **1 min**.
 - Click to **Save**.
 
 Create **test event** to test the code:
-![picture](documentation/LAMBDA_6.png)
+![picture](Documentation/LAMBDA_6.png)
 
 - Click to **"Test"**.
-- Add a **name** for your template test event ![picture](documentation/LAMBDA_7.png)
+- Add a **name** for your template test event ![picture](Documentation/LAMBDA_7.png)
 - Click to **Create**.
 
 As final step, **click to "Test"** (with your newly created test event), **but to be safe, you can comment out the following lines (with this modification code will not delete any volume, just print volumeIds)**:
@@ -211,21 +211,21 @@ As final step, **click to "Test"** (with your newly created test event), **but t
         #         print("Error OR no any volume was flagged to delete:" + str(e))
 ```
 
-![picture](documentation/LAMBDA_8.png)
+![picture](Documentation/LAMBDA_8.png)
 
-- Click to Test. You should expect something similar:![picture](documentation/LAMBDA_9.png)
+- Click to Test. You should expect something similar:![picture](Documentation/LAMBDA_9.png)
 
 #### Set up trigger
 
 Trigger is responsible to fire up the lambda function. For this purpose Solution uses simple CRON expression to achieve time-based trigger.
 
 Add trigger:
-![picture](documentation/TRIGGER_1.png)
+![picture](Documentation/TRIGGER_1.png)
 
 - Click to trigger
 
 Configure trigger:
-![picture](documentation/TRIGGER_2.png)
+![picture](Documentation/TRIGGER_2.png)
 
 - Select **Create a new rule**.
 - Add a **name** for your new rule.
@@ -237,7 +237,7 @@ Configure trigger:
 ### How to exclude specific volumes?
 
 If you would like to exclude specific volumes, you can simply add defined tag:value pair to it. Be noted, it is **case-sensitive!**.
-![picture](documentation/EXCLUDE.png)
+![picture](Documentation/EXCLUDE.png)
 
 - Add `Permanent` as TAG key.
 - Add `YES` as TAG value.
