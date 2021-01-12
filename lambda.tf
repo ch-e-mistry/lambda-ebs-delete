@@ -87,9 +87,9 @@ data "archive_file" "lambda_zip" {
 
 resource "aws_lambda_function" "test_lambda" {
   filename      = "python-ebs-delete.zip"
-  function_name = "lambda_function_name"
+  function_name = "python-ebs-delete"
   role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "exports.test"
+  handler       = "python-ebs-delete.lambda_handler"
   timeout       = "60"
   memory_size   = "128"
   tags          = {
@@ -107,4 +107,23 @@ resource "aws_lambda_function" "test_lambda" {
       IGNORE_WINDOW = "1"
     }
   }
+}
+resource "aws_cloudwatch_event_rule" "UTC3" {
+  name                = "UTC_0300"
+  description         = "Schedule at 03:00 UTC"
+  schedule_expression = "cron(0 3 * * ? *)"
+}
+
+resource "aws_cloudwatch_event_target" "test_lambda_UTC3" {
+  rule      = "${aws_cloudwatch_event_rule.UTC3.name}"
+  target_id = "lambda"
+  arn       =  aws_lambda_function.test_lambda.arn
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_test_lambda" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.test_lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = "${aws_cloudwatch_event_rule.UTC3.arn}"
 }
