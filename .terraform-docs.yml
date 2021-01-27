@@ -1,0 +1,34 @@
+formatter: markdown table
+header-from: main.tf
+sections:
+#  hide-all: false
+  hide:
+#    - header
+#    - inputs
+#    - outputs
+#    - providers
+    - requirements
+#  show-all: true
+#  show:
+#    - header
+#    - inputs
+#    - outputs
+#    - providers
+#    - requirements
+
+output-values:
+  enabled: false
+  from: ""
+
+sort:
+  enabled: true
+  by:
+#    - required
+    - type
+
+settings:
+  color: true
+  escape: true
+  indent: 3
+  required: false
+  sensitive: true
