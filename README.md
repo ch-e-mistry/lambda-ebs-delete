@@ -10,7 +10,12 @@ AWS lambda code (python) to delete aged, not in use volumes (expect if it has ex
       - [Dependencies - Python code](#dependencies---python-code)
       - [Dependencies - Permissions](#dependencies---permissions)
       - [Dependencies - Trigger](#dependencies---trigger)
-    - [Implementation](#implementation)
+    - [Implementation - With automation](#implementation---with-automation)
+      - [Terraform resource graph](#terraform-resource-graph)
+      - [Providers](#providers)
+      - [Inputs](#inputs)
+      - [Outputs](#outputs)
+    - [Implementation - Manual](#implementation---manual)
       - [Create Role and Policy (IAM)](#create-role-and-policy-iam)
       - [Create Lambda function](#create-lambda-function)
       - [Set up trigger](#set-up-trigger)
@@ -51,29 +56,70 @@ As this whole serverless solution's main goal to cleanup the affected AWS enviro
 
 - **CloudWatch - CRON expression** --> Time-based expression with trigger purpose. **Schedule to start the lambda** function's execution.
 
-### Implementation
+### Implementation - With automation
+
+This solution can be implemented via **terraform**, so in automatic way.
+
+Feel free to implement it bi CI/CD tool like gitlab CICD or with Jenkins.
+
+
+#### Terraform resource graph
+
+![picture](Documentation/graph.svg)
+#### Providers
+
+| Name | Version |
+|------|---------|
+| archive | n/a |
+| aws | ~> 3.23 |
+
+#### Inputs
+
+| Name | Description | Type | Default |
+|------|-------------|------|---------|
+| aws-lambda-function-memory | Maximum allowed memory for the lambda function in MB. | `number` | `"128"` |
+| aws-lambda-function-timeout | Timeout after lambda function will exit. In sec(s) | `number` | `"60"` |
+| aws-cloudwatch-event-rule-schedule-expression | Select runtime engine provided by lambda service. | `string` | `"cron(0 3 * * ? *)"` |
+| aws-lambda-function-runtime | Select runtime engine provided by lambda service. | `string` | `"python3.8"` |
+| profile | AWS Credential(s) profile. Define the name of the profile as defined in your aws credentials file. | `string` | `"default"` |
+| region | AWS region. Where to deploy with this Infrastructure-As-A-Code - terraform. | `string` | `"us-east-1"` |
+| shared\_credentials\_file | \*\*PRE-REQUIRED!\*\* Path of your AWS credentials file. Do NOT store it under version control system! | `string` | `"./secrets/credentials"` |
+
+#### Outputs
+
+| Name | Description |
+|------|-------------|
+| Lambda\_function | Lambda function's ARN. |
+| account\_id | AWS account id, where you deployed infrastructure. |
+
+### Implementation - Manual
 
 Details about how you can implement the solution manually.
+
 #### Create Role and Policy (IAM)
 
 **Navigate in your AWS console to [IAM](https://console.aws.amazon.com/iam/home#/home).**
+
 ![picture](Documentation/IAM_1.png)
 
 - Click to **"Roles"**.
 - Click to **"Create Role"**.
 
 **Create role like:**
+
 ![picture](Documentation/IAM_2.png)
 
 - Choose **"Lambda"**.
 - Click **"Next: Permissions"**.
 
 **Create a new policy:**
+
 ![picture](Documentation/IAM_3.png)
 
 - Click to **"Create policy"**.
 
 Edit the Policy's content like:
+
 ![picture](Documentation/IAM_4.png)
 
 - Click to **"JSON" tab**.
@@ -113,6 +159,7 @@ Edit the Policy's content like:
 ```
 
 **Review policy:**
+
 ![picture](Documentation/IAM_5.png)
 
 - Fill up the **name** field.
@@ -120,23 +167,27 @@ Edit the Policy's content like:
 - Click to **"Crete policy"**.
 
 **Now again, start to create new role:**
+
 ![picture](Documentation/IAM_1.png)
 
 -Click to **Roles**.
 Click to **Crete role**.
 
 **Select previously created policy**:
+
 ![picture](Documentation/IAM_6.png)
 
 - **Search** for **ebs** (Name of the policy).
 - **Select** it.
 
 Optionally **add any TAG**:
+
 ![picture](Documentation/IAM_7.png)
 
 - It depends on you tagging logic.
 
 **Review and name your new role:**
+
 ![picture](Documentation/IAM_8.png)
 
 - Add a **name** to your role.
@@ -146,6 +197,7 @@ Optionally **add any TAG**:
 #### Create Lambda function
 
 Navigate to the **affected region**'s **Lambda** service && **Create a new function**:
+
 ![picture](Documentation/LAMBDA_1.png)
 
 - Choose right **region**.
@@ -153,6 +205,7 @@ Navigate to the **affected region**'s **Lambda** service && **Create a new funct
 - **Create function**.
 
 Provide **basic information** for lambda:
+
 ![picture](Documentation/LAMBDA_2.png)
 
 - Leave on "**Author from scratch**".
@@ -164,24 +217,28 @@ Provide **basic information** for lambda:
 - Click to **Create function**.
 
 Copy **python code** to "Function code":
+
 ![picture](Documentation/LAMBDA_3.png)
 
-- In **Function code section, copy the [python-ebs-delete.py](./python-ebs-delete.py) file's content** (file is in this repository).
+- In **Function code section, copy the [python-ebs-delete.py](./lambda/python-ebs-delete.py) file's content** (file is in this repository).
 - Don't left to **"Deploy"** the code. Click on it.
 
 Add required **environment variable**:
+
 ![picture](Documentation/LAMBDA_4.png)
 
 - Edit **Environment variables** section.
 - Add `IGNORE_WINDOW`: Exclude not in use volumes which are older than (int) days.
 
 Adjust **basic settings**:
+
 ![picture](Documentation/LAMBDA_5.png)
 
 - Be sure, **Timeout** was set to **1 min**.
 - Click to **Save**.
 
 Create **test event** to test the code:
+
 ![picture](Documentation/LAMBDA_6.png)
 
 - Click to **"Test"**.
@@ -211,20 +268,24 @@ As final step, **click to "Test"** (with your newly created test event), **but t
         #         print("Error OR no any volume was flagged to delete:" + str(e))
 ```
 
+- Click to Test. You should expect something similar:
+  
 ![picture](Documentation/LAMBDA_8.png)
 
-- Click to Test. You should expect something similar:![picture](Documentation/LAMBDA_9.png)
+![picture](Documentation/LAMBDA_9.png)
 
 #### Set up trigger
 
 Trigger is responsible to fire up the lambda function. For this purpose Solution uses simple CRON expression to achieve time-based trigger.
 
-Add trigger:
+**Add trigger:**
+
 ![picture](Documentation/TRIGGER_1.png)
 
 - Click to trigger
 
-Configure trigger:
+**Configure trigger:**
+
 ![picture](Documentation/TRIGGER_2.png)
 
 - Select **Create a new rule**.
@@ -237,6 +298,7 @@ Configure trigger:
 ### How to exclude specific volumes?
 
 If you would like to exclude specific volumes, you can simply add defined tag:value pair to it. Be noted, it is **case-sensitive!**.
+
 ![picture](Documentation/EXCLUDE.png)
 
 - Add `Permanent` as TAG key.
